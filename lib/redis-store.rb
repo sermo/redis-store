@@ -7,6 +7,5 @@ require 'redis/store/marshalling'
 require 'redis/store/version'
 
 class Redis
-  class Store < self
-  end
+  class Store < self; end
 end

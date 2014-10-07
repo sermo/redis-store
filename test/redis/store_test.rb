@@ -2,44 +2,53 @@ require 'test_helper'
 
 describe Redis::Store do
   before do
-    @store  = Redis::Store.new
-    @client = @store.instance_variable_get(:@client)
+    @store = new_store
+    @client = get_client(@store)
   end
 
-  it "returns useful informations about the server" do
+  it 'returns useful information about the server' do
     @store.to_s.must_equal("Redis Client connected to #{@client.host}:#{@client.port} against DB #{@client.db}")
   end
 
-  it "must force reconnection" do
+  it 'must force client reconnection' do
     @client.expects(:reconnect)
+
     @store.reconnect
   end
 
-  describe '#set' do
-    describe 'with expiry' do
-      let(:key) { 'key' }
-      let(:value) { 'value' }
-      let(:options) { { :expire_after => 3600 } }
+  describe 'must not double marshal' do
+    before do
+      @store = new_store
 
-      it 'must not double marshall' do
-        Marshal.expects(:dump).once
+      Marshal.expects(:dump).once
+    end
 
-        @store.set(key, value, options)
-      end
+    it '#set' do
+      @store.set('key', 'value')
+    end
+
+    it '#setex' do
+      @store.setex('key', 1, 'value')
+    end
+
+    it '#setnx' do
+      @store.setnx('key', 'value')
     end
   end
 
-  describe '#setnx' do
-    describe 'with expiry' do
-      let(:key) { 'key' }
-      let(:value) { 'value' }
-      let(:options) { { :expire_after => 3600 } }
+  private
 
-      it 'must not double marshall' do
-        Marshal.expects(:dump).once
+  def get_client(store)
+    store.instance_variable_get(:@client)
+  end
 
-        @store.setnx(key, value, options)
-      end
+  def new_store(client = nil)
+    Redis::Store.new.tap do |store|
+      set_client(store, client) if client
     end
+  end
+
+  def set_client(store, client)
+    store.instance_variable_set(:@client, client)
   end
 end

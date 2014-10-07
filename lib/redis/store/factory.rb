@@ -3,7 +3,6 @@ require 'uri'
 class Redis
   class Store < self
     class Factory
-
       DEFAULT_PORT = 6379
 
       def self.create(*options)
@@ -12,7 +11,7 @@ class Redis
 
       def initialize(*options)
         @addresses = []
-        @options   = {}
+        @options = {}
         extract_addresses_and_options(options)
       end
 
@@ -22,13 +21,14 @@ class Redis
         end
         
         if @addresses.size > 1
-          ::Redis::DistributedStore.new @addresses, @options
+          ::Redis::DistributedStore.new(@addresses, @options)
         else
-          ::Redis::Store.new @addresses.first.merge(@options)
+          ::Redis::Store.new(@addresses.first.merge(@options))
         end
       end
 
-      def self.resolve(uri) #:api: private
+      #:api: private
+      def self.resolve(uri)
         if uri.is_a?(Hash)
           extract_host_options_from_hash(uri)
         else
@@ -52,28 +52,26 @@ class Redis
       end
 
       def self.host_options?(options)
-        if options.keys.any? {|n| [:host, :db, :port].include?(n) }
+        if options.keys.any? { |n| [:host, :db, :port].include?(n) }
           options
         else
-          nil # just to be clear
+          nil
         end
       end
 
       def self.extract_host_options_from_uri(uri)
         uri = URI.parse(uri)
-        _, db, namespace = if uri.path
-                             uri.path.split(/\//)
-                           end
+
+        _, db, namespace = uri.path.split(/\//) if uri.path
 
         options = {
-          :host     => uri.host,
-          :port     => uri.port || DEFAULT_PORT, 
-          :password => uri.password
+          :host => uri.host,
+          :port => uri.port || DEFAULT_PORT, 
+          :password => uri.password,
         }
 
-        options[:db]        = db.to_i   if db
+        options[:db] = db.to_i if db
         options[:namespace] = namespace if namespace
-
         options
       end
 
@@ -89,7 +87,6 @@ class Redis
           end
         end
       end
-
     end
   end
 end

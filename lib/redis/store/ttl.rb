@@ -2,7 +2,8 @@ class Redis
   class Store < self
     module Ttl
       def set(key, value, options = nil)
-        if ttl = expires_in(options)
+        ttl = expires_in(options)
+        if ttl
           setex(key, ttl.to_i, value, :raw => true)
         else
           super(key, value)
@@ -10,7 +11,8 @@ class Redis
       end
 
       def setnx(key, value, options = nil)
-        if ttl = expires_in(options)
+        ttl = expires_in(options)
+        if ttl
           setnx_with_expire(key, value, ttl.to_i)
         else
           super(key, value)
@@ -18,20 +20,26 @@ class Redis
       end
 
       protected
-        def setnx_with_expire(key, value, ttl)
-          multi do
-            setnx(key, value, :raw => true)
-            expire(key, ttl)
-          end
+
+      def setnx_with_expire(key, value, ttl)
+        multi do
+          setnx(key, value, :raw => true)
+          expire(key, ttl)
         end
+      end
 
       private
-        def expires_in(options)
-          if options
-            # Rack::Session           Merb                    Rails/Sinatra
-            options[:expire_after] || options[:expires_in] || options[:expire_in]
-          end
+
+      def expires_in(options)
+        if options
+          # Rack::Session
+          options[:expire_after] ||
+          # Merb
+          options[:expires_in] ||
+          # Rails/Sinatra
+          options[:expire_in]
         end
+      end
     end
   end
 end

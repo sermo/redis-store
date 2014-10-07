@@ -12,7 +12,7 @@ class Redis
       def exists(key)
         namespace(key) { |k| super(k) }
       end
-      
+
       def expire(key, ttl)
         namespace(key) { |k| super(k, ttl) }
       end
@@ -48,7 +48,7 @@ class Redis
       def to_s
         "#{super} with namespace #{@namespace}"
       end
-      
+
       def ttl(key)
         namespace(key) { |k| super(k) }
       end

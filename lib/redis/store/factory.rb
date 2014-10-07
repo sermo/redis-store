@@ -41,7 +41,7 @@ class Redis
         if host_options?(options)
           options
         else
-          nil 
+          nil
         end
       end
 
@@ -66,7 +66,7 @@ class Redis
 
         options = {
           :host => uri.host,
-          :port => uri.port || DEFAULT_PORT, 
+          :port => uri.port || DEFAULT_PORT,
           :password => uri.password,
         }
 
@@ -78,7 +78,7 @@ class Redis
       private
 
       def extract_addresses_and_options(*options)
-        options.flatten.compact.each do |token| 
+        options.flatten.compact.each do |token|
           resolved = self.class.resolve(token)
           if resolved
             @addresses << resolved

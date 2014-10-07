@@ -1,3 +1,9 @@
+*1.1.5.sermo (October 7, 2014)*
+
+  * Bump version v1.1.5.sermo
+  * Gracefully handle `Redis::CannotConnectError` during all operations
+  * Clean up whitespace
+
 *1.1.4.sermo (October 6, 2014)*
 
   * Bump version v1.1.4.sermo

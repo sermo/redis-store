@@ -36,6 +36,22 @@ describe Redis::Store do
     end
   end
 
+  describe 'cannot connect to redis' do
+    before do
+      @store = new_store(::Redis::Client.new(:port => 12345))
+
+      @store.expects(:log_error).once
+    end
+
+    it 'will log and return nil if it cannot get an element' do
+      @store.get('key').must_equal(nil)
+    end
+
+    it 'will log and return nil if it cannot mget some elements' do
+      @store.mget('key1', 'key2').must_equal([])
+    end
+  end
+
   private
 
   def get_client(store)

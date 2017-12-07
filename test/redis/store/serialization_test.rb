@@ -1,8 +1,8 @@
 require 'test_helper'
 
-describe "Redis::Marshalling" do
+describe "Redis::Serialization" do
   def setup
-    @store = Redis::Store.new :marshalling => true
+    @store = Redis::Store.new serializer: Marshal
     @rabbit = OpenStruct.new :name => "bunny"
     @white_rabbit = OpenStruct.new :color => "white"
     @store.set "rabbit", @rabbit
@@ -10,6 +10,7 @@ describe "Redis::Marshalling" do
   end
 
   def teardown
+    @store.flushdb
     @store.quit
   end
 
@@ -20,6 +21,12 @@ describe "Redis::Marshalling" do
   it "marshals on set" do
     @store.set "rabbit", @white_rabbit
     @store.get("rabbit").must_equal(@white_rabbit)
+  end
+
+  it "marshals on multi set" do
+    @store.mset("rabbit", @white_rabbit, "rabbit2", @rabbit)
+    @store.get("rabbit").must_equal(@white_rabbit)
+    @store.get("rabbit2").must_equal(@rabbit)
   end
 
   if RUBY_VERSION.match /1\.9/
@@ -35,6 +42,12 @@ describe "Redis::Marshalling" do
   it "doesn't marshal set if raw option is true" do
     @store.set "rabbit", @white_rabbit, :raw => true
     @store.get("rabbit", :raw => true).must_equal(%(#<OpenStruct color="white">))
+  end
+
+  it "doesn't marshal multi set if raw option is true" do
+    @store.mset("rabbit", @white_rabbit, "rabbit2", @rabbit, :raw => true)
+    @store.get("rabbit", :raw => true).must_equal(%(#<OpenStruct color="white">))
+    @store.get("rabbit2", :raw => true).must_equal(%(#<OpenStruct name="bunny">))
   end
 
   it "doesn't unmarshal if get returns an empty string" do
@@ -66,9 +79,29 @@ describe "Redis::Marshalling" do
     @store.get("rabbit2").must_be_nil
   end
 
+  it "marshals setex (over a distributed store)" do
+    @store = Redis::DistributedStore.new [
+      {:host => "localhost", :port => "6380", :db => 0},
+      {:host => "localhost", :port => "6381", :db => 0}
+    ]
+    @store.setex "rabbit", 50, @white_rabbit
+    @store.get("rabbit").must_equal(@white_rabbit)
+  end
+
+  it "doesn't marshal setex if raw option is true (over a distributed store)" do
+    @store = Redis::DistributedStore.new [
+      {:host => "localhost", :port => "6380", :db => 0},
+      {:host => "localhost", :port => "6381", :db => 0}
+    ]
+    @store.setex "rabbit", 50, @white_rabbit, :raw => true
+    @store.get("rabbit", :raw => true).must_equal(%(#<OpenStruct color="white">))
+  end
+
   it "doesn't unmarshal on multi get" do
     @store.set "rabbit2", @white_rabbit
-    rabbit, rabbit2 = @store.mget "rabbit", "rabbit2"
+    rabbits = @store.mget "rabbit", "rabbit2"
+    rabbit, rabbit2 = rabbits
+    rabbits.length.must_equal(2)
     rabbit.must_equal(@rabbit)
     rabbit2.must_equal(@white_rabbit)
   end

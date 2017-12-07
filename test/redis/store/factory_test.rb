@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'json'
 
 describe "Redis::Store::Factory" do
   describe ".create" do
@@ -41,9 +42,53 @@ describe "Redis::Store::Factory" do
         store.instance_variable_get(:@client).password.must_equal("secret")
       end
 
-      it "allows/disable marshalling" do
-        store = Redis::Store::Factory.create :marshalling => false
-        store.instance_variable_get(:@marshalling).must_equal(false)
+      it 'uses empty password' do
+        store = Redis::Store::Factory.create :password => ''
+        store.instance_variable_get(:@client).password.must_equal('')
+      end
+
+      it 'uses nil password' do
+        store = Redis::Store::Factory.create :password => nil
+        assert_nil(store.instance_variable_get(:@client).password)
+      end
+
+      it "disables serialization" do
+        store = Redis::Store::Factory.create :serializer => nil
+        store.instance_variable_get(:@serializer).must_be_nil
+        store.instance_variable_get(:@options)[:raw].must_equal(true)
+      end
+
+      it "configures pluggable serialization backend" do
+        store = Redis::Store::Factory.create :serializer => JSON
+        store.instance_variable_get(:@serializer).must_equal(JSON)
+        store.instance_variable_get(:@options)[:raw].must_equal(false)
+      end
+
+      describe 'with stdout disabled' do
+        before do
+          @original_stderr = $stderr
+          @original_stdout = $stdout
+
+          $stderr = Tempfile.new('stderr')
+          $stdout = Tempfile.new('stdout')
+        end
+
+        it "disables marshalling and provides deprecation warning" do
+          store = Redis::Store::Factory.create :marshalling => false
+          store.instance_variable_get(:@serializer).must_be_nil
+          store.instance_variable_get(:@options)[:raw].must_equal(true)
+        end
+
+        it "enables marshalling but provides warning to use :serializer instead" do
+          store = Redis::Store::Factory.create :marshalling => true
+          store.instance_variable_get(:@serializer).must_equal(Marshal)
+          store.instance_variable_get(:@options)[:raw].must_equal(false)
+        end
+
+        after do
+          $stderr = @original_stderr
+          $stdout = @original_stdout
+        end
       end
 
       it "should instantiate a Redis::DistributedStore store" do
@@ -83,6 +128,27 @@ describe "Redis::Store::Factory" do
       it "uses specified password" do
         store = Redis::Store::Factory.create "redis://:secret@127.0.0.1:6379/0/theplaylist"
         store.instance_variable_get(:@client).password.must_equal("secret")
+      end
+
+      it 'uses specified password with special characters' do
+        store = Redis::Store::Factory.create 'redis://:pwd%40123@127.0.0.1:6379/0/theplaylist'
+        store.instance_variable_get(:@client).password.must_equal('pwd@123')
+      end
+
+      it 'uses empty password' do
+        store = Redis::Store::Factory.create 'redis://:@127.0.0.1:6379/0/theplaylist'
+        store.instance_variable_get(:@client).password.must_equal('')
+      end
+
+      it 'uses nil password' do
+        store = Redis::Store::Factory.create 'redis://127.0.0.1:6379/0/theplaylist'
+        assert_nil(store.instance_variable_get(:@client).password)
+      end
+
+      it "correctly uses specified ipv6 host" do
+        store = Redis::Store::Factory.create "redis://[::1]:6380"
+        store.to_s.must_equal("Redis Client connected to [::1]:6380 against DB 0")
+        store.instance_variable_get('@options')[:host].must_equal("::1")
       end
 
       it "instantiates Redis::DistributedStore" do
@@ -128,6 +194,11 @@ describe "Redis::Store::Factory" do
           "Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist",
           "Redis Client connected to 127.0.0.1:6380 against DB 0 with namespace theplaylist",
         ])
+      end
+
+      it 'instantiates Redis::Store and sets namespace from String' do
+        store = Redis::Store::Factory.create "redis://127.0.0.1:6379/0/theplaylist", { :expire_after => 5 }
+        store.to_s.must_equal("Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist")
       end
     end
   end

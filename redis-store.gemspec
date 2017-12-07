@@ -17,14 +17,16 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+  s.license       = 'MIT'
 
-  s.add_dependency 'redis', '>= 2.2'
+  s.add_dependency 'redis', '>= 2.2', '< 5'
 
   s.add_development_dependency 'rake',     '~> 10'
   s.add_development_dependency 'bundler',  '~> 1.3'
   s.add_development_dependency 'mocha',    '~> 0.14.0'
   s.add_development_dependency 'minitest', '~> 5'
   s.add_development_dependency 'git',      '~> 1.2'
+  s.add_development_dependency 'pry-nav',  '~> 0.2.4'
+  s.add_development_dependency 'pry',      '~> 0.10.4'
   s.add_development_dependency 'redis-store-testing'
 end
-

@@ -1,10 +1,105 @@
-*1.1.5.sermo (October 7, 2014)*
+# Changelog
+
+## 1.4.1.sermo (December 7, 2017)*
+
+  * Bump version v1.4.1.sermo
+  * Gracefully handle `Redis::CannotConnectError` during all operations
+
+## 1.4.1
+
+Breaking Changes
+
+* None
+
+Added
+
+* [Support for Redis client library v4](https://github.com/redis-store/redis-store/issues/277)
+
+Fixed
+
+* None
+
+## 1.4.0
+
+Breaking Changes
+
+* None
+
+Added
+
+* Pluggable backend for serializing data in/out of Redis, eventually replacing `:marshalling` in v2.
+
+Fixed
+
+* Conventional `Marshal.dump` usage allowing potential security vulnerability (CVE-2017-1000248) 
+
+## 1.3.0
+
+Breaking Changes
+
+* None
+
+Added
+
+* Add support for marshalling mset
+
+Fixed
+
+* Set :raw => true if marshalling
+* Forward new Hash, not nil, when options are unset
+
+## 1.2.0
+
+Breaking Changes
+
+* None
+
+Added
+
+* Allow changing namespaces on the fly
+* Begin testing against ruby 2.3.0
+
+Fixed
+
+* Use batched deletes for flushdb with a namespace
+* pass set command options to redis
+* bump rbx 2
+* fix setex marshalling for distributed store
+* changes to new url
+* :warning: shadowing outer local variable - key, pattern, value
+* :warning: `*' interpreted as argument prefix
+* Removed duplicated method ttl
+
+## 1.1.7
+
+Breaking Changes
+
+* None
+
+Added
+
+* Added redis_version and supports_redis_version? methods to Store and DistributedStore
+
+Fixed
+
+* Handle minor and patch version correctly as they may be multiple digits
+
+*1.1.6 (July 16, 2015)*
+
+https://github.com/redis-store/redis-store/compare/v1.1.5...v1.1.6
+
+*1.1.5 (June 8, 2015)*
+
+https://github.com/redis-store/redis-store/compare/v1.1.4...v1.1.5
+
+
+## 1.1.5.sermo (October 7, 2014)*
 
   * Bump version v1.1.5.sermo
   * Gracefully handle `Redis::CannotConnectError` during all operations
   * Clean up whitespace
 
-*1.1.4.sermo (October 6, 2014)*
+## 1.1.4.sermo (October 6, 2014)*
 
   * Bump version v1.1.4.sermo
   * Clean-up/reformatting for consistency
@@ -99,7 +194,7 @@
     - redis-i18n 0.6.0.rc2
     - redis-rack-cache 1.1.rc3
     - redis-rails 3.1.3.rc4
-    - redis-sinatra 1.3.1.rc2 
+    - redis-sinatra 1.3.1.rc2
   * Remove redis-actionpack dependency on redis-rack-cache [Matt Horan]
 
 *1.1.0 [rc2] (February 3, 2012)*
@@ -148,7 +243,7 @@
   * Use strict dependencies.
   * READMEs and Licenses
   * redis-actionpack now depends on redis-rack-cache
-  * Redis::Factory.convert_to_redis_client_options => Redis::Factory.resolve. 
+  * Redis::Factory.convert_to_redis_client_options => Redis::Factory.resolve.
   * Don't use autoload
   * Make redis-rack-cache tests to pass again
   * Target Rack::Cache 1.1 for redis-rack-cache
@@ -176,7 +271,7 @@
   * Moved Rake test tasks into lib/tasks/redis.tasks.rb, in order to DRY Rake
   * Testing: Use relative paths when referring to pid files
   * Autoload modules
-  * Moved Rake test tasks under lib/ in order to make them accessible to all 
+  * Moved Rake test tasks under lib/ in order to make them accessible to all
   * Let the Redis::DistributedStore test to pass
   * Let Redis Rake tasks to work again
   * Run tests without dtach

@@ -21,7 +21,7 @@ Download and install Redis from [the download page](http://redis.io//download) a
 ## Running tests
 
 ```ruby
-git clone git://github.com/jodosha/redis-store.git
+git clone git://github.com/redis-store/redis-store.git
 cd redis-store
 gem install bundler
 bundle exec rake
@@ -31,12 +31,24 @@ If you are on **Snow Leopard** you have to run `env ARCHFLAGS="-arch x86_64" rub
 
 ## Contributors
 
-  * Matt Horan ([@mhoran](https://github.com/mhoran))
+https://github.com/redis-store/redis-store/graphs/contributors
+
+## Versioning
+
+The **redis-store** family of gems uses [Semantic Versioning](http://semver.org), meaning gems depending on **redis-store**
+can be reliably inclusive of any version between the current and the next major. We recommend the following dependency
+in your library's gemspec:
+
+```ruby
+s.add_dependency 'redis-store', '>= 1.4', '< 2'
+```
 
 ## Status
 
-[![Gem Version](https://badge.fury.io/rb/redis-store.png)](http://badge.fury.io/rb/redis-store) [![Build Status](https://secure.travis-ci.org/redis-store/redis-store.png?branch=master)](http://travis-ci.org/jodosha/redis-store?branch=master) [![Code Climate](https://codeclimate.com/github/jodosha/redis-store.png)](https://codeclimate.com/github/redis-store/redis-store)
+[![Gem Version](https://badge.fury.io/rb/redis-store.png)](http://badge.fury.io/rb/redis-store)
+[![Build Status](https://secure.travis-ci.org/redis-store/redis-store.png?branch=master)](http://travis-ci.org/redis-store/redis-store?branch=master)
+[![Code Climate](https://codeclimate.com/github/redis-store/redis-store.png)](https://codeclimate.com/github/redis-store/redis-store)
 
 ## Copyright
 
-2009 - 2013 Luca Guidi - [http://lucaguidi.com](http://lucaguidi.com), released under the MIT license
+2009 - 2013 Luca Guidi - [http://lucaguidi.com](http://lucaguidi.com), released under the MIT license.

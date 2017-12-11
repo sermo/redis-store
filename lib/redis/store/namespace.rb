@@ -1,75 +1,111 @@
 class Redis
   class Store < self
     module Namespace
-      def decrby(key, increment)
-        namespace(key) { |k| super(k, increment) }
+      FLUSHDB_BATCH_SIZE = 1000
+
+      def set(key, val, options = nil)
+        namespace(key) { |k| super(k, val, options) }
       end
 
-      def del(*keys)
-        super(*keys.map { |k| interpolate(k) }) if keys.any?
+      def setex(key, ttl, val, options = nil)
+        namespace(key) { |k| super(k, ttl, val, options) }
       end
 
-      def exists(key)
+      def setnx(key, val, options = nil)
+        namespace(key) { |k| super(k, val, options) }
+      end
+
+      def ttl(key, options = nil)
         namespace(key) { |k| super(k) }
-      end
-
-      def expire(key, ttl)
-        namespace(key) { |k| super(k, ttl) }
-      end
-
-      def flushdb
-        del(*keys)
       end
 
       def get(key, options = nil)
         namespace(key) { |k| super(k, options) }
       end
 
+      def exists(key)
+        namespace(key) { |k| super(k) }
+      end
+
       def incrby(key, increment)
         namespace(key) { |k| super(k, increment) }
       end
 
+      def decrby(key, increment)
+        namespace(key) { |k| super(k, increment) }
+      end
+
       def keys(pattern = "*")
-        namespace(pattern) { |p| super(p).map { |k| strip_namespace(k) } }
+        namespace(pattern) { |p| super(p).map{|key| strip_namespace(key) } }
+      end
+
+      def del(*keys)
+        super(*keys.map {|key| interpolate(key) }) if keys.any?
+      end
+
+      def watch(*keys)
+        super(*keys.map {|key| interpolate(key) }) if keys.any?
       end
 
       def mget(*keys)
-        super(*keys.map { |k| interpolate(k) }) if keys.any?
+        options = (keys.pop if keys.last.is_a? Hash) || {}
+        if keys.any?
+          # Serialization gets extended before Namespace does, so we need to pass options further
+          if singleton_class.ancestors.include? Serialization
+            super(*keys.map {|key| interpolate(key) }, options)
+          else
+            super(*keys.map {|key| interpolate(key) })
+          end
+        end
       end
 
-      def set(key, value, options = nil)
-        namespace(key) { |k| super(k, value, options) }
-      end
-
-      def setnx(key, value, options = nil)
-        namespace(key) { |k| super(k, value, options) }
+      def expire(key, ttl)
+         namespace(key) { |k| super(k, ttl) }
       end
 
       def to_s
-        "#{super} with namespace #{@namespace}"
+        if namespace_str
+          "#{super} with namespace #{namespace_str}"
+        else
+          super
+        end
       end
 
-      def ttl(key)
-        namespace(key) { |k| super(k) }
+      def flushdb
+        keys.each_slice(FLUSHDB_BATCH_SIZE) { |key_slice| del(*key_slice) }
+      end
+
+      def with_namespace(ns)
+        old_ns = @namespace
+        @namespace = ns
+        yield self
+      ensure
+        @namespace = old_ns
       end
 
       private
+        def namespace(key)
+          yield interpolate(key)
+        end
 
-      def interpolate(key)
-        key.match(namespace_regexp) ? key : "#{@namespace}:#{key}"
-      end
+        def namespace_str
+          @namespace.is_a?(Proc) ? @namespace.call : @namespace
+        end
 
-      def namespace(key)
-        yield interpolate(key)
-      end
+        def interpolate(key)
+          return key unless namespace_str
+          key.match(namespace_regexp) ? key : "#{namespace_str}:#{key}"
+        end
 
-      def namespace_regexp
-        @namespace_regexp ||= %r{^#{@namespace}\:}
-      end
+        def strip_namespace(key)
+          return key unless namespace_str
+          key.gsub namespace_regexp, ""
+        end
 
-      def strip_namespace(key)
-        key.gsub(namespace_regexp, "")
-      end
+        def namespace_regexp
+          @namespace_regexps ||= {}
+          @namespace_regexps[namespace_str] ||= %r{^#{namespace_str}\:}
+        end
     end
   end
 end

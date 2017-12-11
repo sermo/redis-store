@@ -1,70 +1,68 @@
 require 'test_helper'
 
 describe Redis::Store do
-  before do
-    @store = new_store
-    @client = get_client(@store)
+  def setup
+    @store  = Redis::Store.new
+    @client = @store.instance_variable_get(:@client)
   end
 
-  it 'returns useful information about the server' do
+  def teardown
+    @store.flushdb
+    @store.quit
+  end
+
+  it "returns useful informations about the server" do
     @store.to_s.must_equal("Redis Client connected to #{@client.host}:#{@client.port} against DB #{@client.db}")
   end
 
-  it 'must force client reconnection' do
+  it "must force reconnection" do
     @client.expects(:reconnect)
-
     @store.reconnect
   end
 
-  describe 'must not double marshal' do
-    before do
-      @store = new_store
+  describe '#set' do
+    describe 'with expiry' do
+      let(:options) { { :expire_after => 3600 } }
 
-      Marshal.expects(:dump).once
+      it 'must not double marshall' do
+        Marshal.expects(:dump).once
+
+        @store.set('key', 'value', options)
+      end
     end
 
-    it '#set' do
-      @store.set('key', 'value')
-    end
+    describe 'with ex and nx' do
+      let(:key) { 'key' }
+      let(:mock_value) { 'value' }
+      let(:options) { { nx: true, ex: 3600 } }
 
-    it '#setex' do
-      @store.setex('key', 1, 'value')
-    end
+      it 'must pass on options' do
+        Marshal.expects(:dump).times(4)
 
-    it '#setnx' do
-      @store.setnx('key', 'value')
-    end
-  end
+        # without options no ex or nx will be set
+        @store.del(key)
+        @store.set(key, mock_value, {}).must_equal 'OK'
+        @store.set(key, mock_value, {}).must_equal 'OK'
+        @store.ttl(key).must_equal -1
 
-  describe 'cannot connect to redis' do
-    before do
-      @store = new_store(::Redis::Client.new(:port => 12345))
-
-      @store.expects(:log_error).once
-    end
-
-    it 'will log and return nil if it cannot get an element' do
-      @store.get('key').must_equal(nil)
-    end
-
-    it 'will log and return nil if it cannot mget some elements' do
-      @store.mget('key1', 'key2').must_equal([])
+        # with ex and nx options, the key can only be set once and a ttl will be set
+        @store.del(key)
+        @store.set(key, mock_value, options).must_equal true
+        @store.set(key, mock_value, options).must_equal false
+        @store.ttl(key).must_equal 3600
+      end
     end
   end
 
-  private
+  describe '#setnx' do
+    describe 'with expiry' do
+      let(:options) { { :expire_after => 3600 } }
 
-  def get_client(store)
-    store.instance_variable_get(:@client)
-  end
+      it 'must not double marshall' do
+        Marshal.expects(:dump).once
 
-  def new_store(client = nil)
-    Redis::Store.new.tap do |store|
-      set_client(store, client) if client
+        @store.setnx('key', 'value', options)
+      end
     end
-  end
-
-  def set_client(store, client)
-    store.instance_variable_set(:@client, client)
   end
 end
